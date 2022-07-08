@@ -1,0 +1,57 @@
+const Contenedor = require("../Contenedor");
+const contenedorCarts = new Contenedor("./db/carts.json", "./db/cartIds.json", "./db/deletedCarts.json", "Carrito");
+const {contenedorProducts} = require("./apiProductController")
+contenedorCarts.init("Carritos");
+
+const postCart = async (req, res) => {
+    res.json(await contenedorCarts.save({ objType: "cart" }))
+}
+
+const emptyByCartId = async (req, res) => {
+    const index = contenedorCarts.products.findIndex(producto => producto.id == req.params.id)
+    if (index != -1) {
+        await contenedorCarts.emptyCartById(index, req.params.id);
+    } else {
+        res.json({ error: `No se encontró el cart con ID ${req.params.id}` })
+    }
+}
+
+const deleteCartById = async (req, res) => {
+    await emptyByCartId(req, res);
+    res.json(await contenedorCarts.deleteById(Number(req.params.id)));
+}
+
+const getAllProductsByCartId = (req, res) => {
+    const index = contenedorCarts.products.findIndex(producto => producto.id == req.params.id)
+    if (index != -1) {
+        res.json(contenedorCarts.getAllByCartId(index))
+    } else {
+        res.json({ error: `No se encontró el cart con ID ${req.params.id}` })
+    }
+}
+
+const postProductByCartId = async (req, res) => {
+    const index = contenedorCarts.products.findIndex(producto => producto.id == req.params.id)
+
+    if (index != -1) {
+        const product = contenedorProducts.getById(req.body.productId);
+        if (product.error){
+            res.status(400).json(product)
+        } else{
+            res.json(await contenedorCarts.saveByCartId(index, product))
+        }
+    } else {
+        res.json({ error: `No se encontró el cart con ID ${req.params.id}` })
+    }
+}
+
+const deleteProductByCartId = async (req, res) => {
+    const index = contenedorCarts.products.findIndex(producto => producto.id == req.params.id)
+
+    if (index != -1) {
+        res.json(await contenedorCarts.deleteByCartId(index, req.params.id_prod, req.params.id))
+    } else {
+        res.json({ error: `No se encontró el cart con ID ${id}` })
+    }
+}
+module.exports = { contenedorCarts, getAllProductsByCartId, postProductByCartId, postCart, deleteCartById, deleteProductByCartId }
